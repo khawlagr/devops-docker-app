@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI / CD Pipeline
 
 on:
   push:
@@ -34,3 +34,11 @@ jobs:
 
       - name: Push Docker Image
         run: docker push khawlagr12/my-docker-app:latest
+
+      - name: Deploy to Kubernetes
+        run: |
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > kubeconfig
+          kubectl --kubeconfig=kubeconfig apply -f k8s/deployment.yaml
+
+
+
