@@ -1,4 +1,4 @@
-name: CI / CD Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -16,7 +16,11 @@ jobs:
         run: docker build -t khawlagr12/my-docker-app:latest .
 
       - name: Run Container and Execute Tests
-        run: docker run --rm khawlagr12/my-docker-app:latest ./run-tests.sh
+        run: |
+          docker run -d -p 8080:80 --name test-container khawlagr12/my-docker-app:latest
+          sleep 3
+          curl --fail http://localhost:8080 || (echo "Test failed: Unable to reach localhost:8080" && exit 1)
+          docker stop test-container
 
   deploy:
     runs-on: ubuntu-latest
@@ -39,6 +43,3 @@ jobs:
         run: |
           echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > kubeconfig
           kubectl --kubeconfig=kubeconfig apply -f k8s/deployment.yaml
-
-
-
