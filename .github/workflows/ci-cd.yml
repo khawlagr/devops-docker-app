@@ -6,28 +6,39 @@ on:
       - main
 
 jobs:
-  full-pipeline:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v2
 
-      - name: Docker login
+      - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-      - name: Build Docker image
+      - name: Build Docker Image
         run: docker build -t khawlagr12/my-docker-app:latest .
 
-      - name: Run tests
+      - name: Run Container and Execute Tests
         run: docker run --rm khawlagr12/my-docker-app:latest ./run-tests.sh
 
-      - name: Push Docker image
+      - name: Push Docker Image to Docker Hub
         run: docker push khawlagr12/my-docker-app:latest
 
-      - name: Set up kubeconfig
-        run: |
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > kubeconfig
-          export KUBECONFIG=$PWD/kubeconfig
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+      - name: Pull Docker Image
+        run: docker pull khawlagr12/my-docker-app:latest
 
       - name: Deploy to Kubernetes
-        run: kubectl --kubeconfig=kubeconfig apply -f k8s/deployment.yaml
+        run: |
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > kubeconfig
+          kubectl --kubeconfig=kubeconfig apply -f k8s/deployment.yaml
