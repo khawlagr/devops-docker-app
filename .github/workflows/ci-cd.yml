@@ -12,11 +12,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
       - name: Build Docker Image
         run: docker build -t khawlagr12/my-docker-app:latest .
 
       - name: Run Container and Execute Tests
         run: docker run --rm khawlagr12/my-docker-app:latest ./run-tests.sh
+
+      - name: Push Docker Image
+        run: docker push khawlagr12/my-docker-app:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -26,16 +32,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-
-      - name: Tag Docker Image
-        run: docker tag khawlagr12/my-docker-app:latest khawlagr12/my-docker-app:latest
-
-      - name: Push Docker Image
-        run: docker push khawlagr12/my-docker-app:latest
-
-      - name: Deploy to Kubernetes
+      - name: Set up kubectl
         run: |
           echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > kubeconfig
-          kubectl --kubeconfig=kubeconfig apply -f k8s/deployment.yaml
+          export KUBECONFIG=$PWD/kubeconfig
+
+      - name: Pull Docker Image
+        run: docker pull khawlagr12/my-docker-app:latest
+
+      - name: Deploy to Kubernetes
+        run: kubectl --kubeconfig=kubeconfig apply -f k8s/deployment.yaml
