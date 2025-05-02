@@ -2,10 +2,16 @@
 
 echo "Starting tests..."
 
-# Vérifie si le serveur est accessible
+# Lancer nginx en arrière-plan
+nginx
+
+# Attendre que nginx démarre
+sleep 2
+
+# Test de connexion
 curl --fail http://localhost:80 || exit 1
 
-# Vérifie si le fichier index.html existe
+# Vérifier l'existence du fichier
 if [ -f /usr/share/nginx/html/index.html ]; then
   echo "Tests passed!"
   exit 0
