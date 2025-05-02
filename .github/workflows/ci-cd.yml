@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build-and-test:
+  build-test-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -18,27 +18,16 @@ jobs:
       - name: Build Docker Image
         run: docker build -t khawlagr12/my-docker-app:latest .
 
-      - name: Run Container and Execute Tests
+      - name: Run Tests
         run: docker run --rm khawlagr12/my-docker-app:latest ./run-tests.sh
 
       - name: Push Docker Image
         run: docker push khawlagr12/my-docker-app:latest
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build-and-test
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-
       - name: Set up kubectl
         run: |
           echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > kubeconfig
           export KUBECONFIG=$PWD/kubeconfig
-
-      - name: Pull Docker Image
-        run: docker pull khawlagr12/my-docker-app:latest
 
       - name: Deploy to Kubernetes
         run: kubectl --kubeconfig=kubeconfig apply -f k8s/deployment.yaml
