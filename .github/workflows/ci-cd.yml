@@ -33,8 +33,8 @@ jobs:
       - name: Log in to Docker Hub
         run: echo "docker#123!?" | docker login -u "khawlagr12" --password-stdin
 
-      - name: Tag Docker Image
-        run: docker tag khawlagr12/my-docker-app:latest khawlagr12/my-docker-app:latest
+      - name: Pull Docker Image
+        run: docker pull khawlagr12/my-docker-app:latest
 
       - name: Push Docker Image
         run: docker push khawlagr12/my-docker-app:latest
